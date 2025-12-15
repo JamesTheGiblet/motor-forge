@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DentalForge - Patient Visualizer</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ==========================================================================
+           ZONE 1: THEME - CLINICAL & COSMETIC
+           ========================================================================== */
+        :root {
+            /* Dental Palette */
+            --primary: #0ea5e9;       /* Medical Blue */
+            --primary-light: #e0f2fe; 
+            --accent: #14b8a6;        /* Mint Green (Fresh) */
+            --danger: #ef4444;        /* Cavity Red */
+            --text: #334155;
+            --white: #ffffff;
+            
+            /* UI Elements */
+            --bg: #f8fafc;
+            --radius: 12px;
+            --shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 16px; }
+
+        /* Header */
+        .header { background: var(--white); padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .header h1 { font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        /* Tabs */
+        .tab-nav { display: flex; background: #e2e8f0; border-radius: 10px; padding: 4px; margin: 20px 0; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; border-radius: 8px; font-weight: 600; color: #64748b; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: var(--white); color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards */
+        .card { background: var(--white); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+        .card h3 { font-size: 1rem; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+        /* Factors Grid */
+        .factor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .factor-btn { 
+            padding: 12px 4px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; 
+            text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        .factor-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
+        .factor-btn.negative.active { border-color: var(--danger); background: #fef2f2; color: #b91c1c; }
+        
+        /* Chart Area */
+        #chart-container { width: 100%; height: 280px; border-radius: var(--radius); overflow: hidden; background: var(--white); }
+
+        /* Range Sliders */
+        .slider-group { margin-bottom: 20px; }
+        .slider-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
+        .slider-val { font-weight: 700; color: var(--primary); }
+        input[type=range] { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; outline: none; -webkit-appearance: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: var(--primary); border: 3px solid white; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Action Button */
+        .cta-btn { 
+            width: 100%; padding: 16px; background: var(--primary);
