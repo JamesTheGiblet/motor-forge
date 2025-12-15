@@ -2,68 +2,968 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DentalForge - Patient Visualizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORLIN Motion Calculator</title>
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ==========================================================================
-           ZONE 1: THEME - CLINICAL & COSMETIC
+           ZONE 1: ORLIN PRECISION THEME
            ========================================================================== */
         :root {
-            /* Dental Palette */
-            --primary: #0ea5e9;       /* Medical Blue */
-            --primary-light: #e0f2fe; 
-            --accent: #14b8a6;        /* Mint Green (Fresh) */
-            --danger: #ef4444;        /* Cavity Red */
-            --text: #334155;
-            --white: #ffffff;
+            /* ORLIN Brand Colors */
+            --orlin-blue: #003B73;       /* Deep Corporate Blue */
+            --orlin-light: #005C9E;      /* Highlight Blue */
+            --orlin-accent: #FF6B00;     /* Tech Orange (Action) */
             
-            /* UI Elements */
-            --bg: #f8fafc;
-            --radius: 12px;
-            --shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+            /* Engineering UI */
+            --bg-grid: #f0f4f8;          /* Page Background */
+            --grid-line: #e2e8f0;        /* Grid Lines */
+            --surface: #ffffff;          /* Card Background */
+            --bg-panel: #e2e8f0;         /* Panels/Tracks */
+            --bg-input: #f8fafc;         /* Inputs */
+            --bg-active-item: #fff7ed;   /* Active Item Background */
+            --bg-rec: #f0f9ff;           /* Recommendation Box */
+            --bg-badge: #e0f2fe;         /* Badge Background */
+            --border-badge: #bae6fd;     /* Badge Border */
+            
+            --text-main: #1e293b;        /* Primary Text */
+            --text-muted: #64748b;       /* Secondary Text */
+            
+            /* "Machined" Look */
+            --border-color: #cbd5e1;
+            --border: 1px solid var(--border-color);
+            --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --radius: 4px; /* Sharp, precise corners */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; min-height: 100vh; }
-        .container { max-width: 800px; margin: 0 auto; padding: 16px; }
+        [data-theme="dark"] {
+            --bg-grid: #0f172a;
+            --grid-line: #1e293b;
+            --surface: #1e293b;
+            --bg-panel: #334155;
+            --bg-input: #020617;
+            --bg-active-item: #431407;
+            --bg-rec: #172554;
+            --bg-badge: #1e3a8a;
+            --border-badge: #1e40af;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+        }
 
-        /* Header */
-        .header { background: var(--white); padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .header h1 { font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        /* --- CORE CSS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-grid);
+            /* Engineering Grid Background */
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main); 
+            padding-bottom: 80px; 
+            min-height: 100vh; 
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         
-        /* Tabs */
-        .tab-nav { display: flex; background: #e2e8f0; border-radius: 10px; padding: 4px; margin: 20px 0; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; border-radius: 8px; font-weight: 600; color: #64748b; cursor: pointer; transition: 0.2s; }
-        .tab-btn.active { background: var(--white); color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .tab-content { display: none; animation: fadeIn 0.3s; }
+        /* Header - Technical Datasheet Style */
+        .header { 
+            background: var(--surface); 
+            border-bottom: 4px solid var(--orlin-blue); 
+            padding: 16px 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            box-shadow: var(--shadow-card);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .logo-box { 
+            background: var(--orlin-blue); color: white; 
+            font-weight: 900; padding: 6px 12px; 
+            border-radius: 2px; letter-spacing: 1px;
+        }
+        .app-title { 
+            font-size: 1.1rem; font-weight: 600; color: var(--text-main); 
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .status-badge {
+            background: var(--bg-badge); color: var(--orlin-blue);
+            padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;
+            border: 1px solid var(--border-badge);
+        }
+
+        /* Header Navigation */
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .nav-link { 
+            background: none; border: none; cursor: pointer; 
+            color: var(--text-muted); font-weight: 600; font-size: 0.9rem;
+            padding: 6px 12px; border-radius: 4px; transition: 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .nav-link:hover { color: var(--orlin-blue); background: var(--bg-panel); }
+        .nav-link.active { color: var(--orlin-blue); background: var(--bg-badge); }
+
+        /* Tab Navigation - Toggle Style */
+        .tab-nav { margin: 20px 0; background: var(--bg-panel); padding: 4px; border-radius: 6px; display: flex; }
+        .tab-btn { 
+            flex: 1; padding: 10px; border: none; background: none; 
+            font-weight: 600; color: var(--text-muted); cursor: pointer; 
+            border-radius: 4px; transition: 0.2s; font-size: 0.9rem;
+        }
+        .tab-btn.active { 
+            background: var(--surface); color: var(--orlin-blue); 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .tab-content { display: none; animation: fadeIn 0.2s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Cards */
-        .card { background: var(--white); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
-        .card h3 { font-size: 1rem; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-
-        /* Factors Grid */
-        .factor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .factor-btn { 
-            padding: 12px 4px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; 
-            text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px;
+        /* Cards - Engineering Panels */
+        .card { 
+            background: var(--surface); border: var(--border); 
+            border-radius: var(--radius); padding: 24px; margin-bottom: 20px; 
+            box-shadow: var(--shadow-card);
         }
-        .factor-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
-        .factor-btn.negative.active { border-color: var(--danger); background: #fef2f2; color: #b91c1c; }
+        .card-header { 
+            border-bottom: 2px solid var(--grid-line); padding-bottom: 12px; margin-bottom: 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .card-header h3 { 
+            color: var(--orlin-blue); font-size: 0.95rem; font-weight: 700; 
+            text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Controls - Precision Inputs */
+        .control-row { display: grid; grid-template-columns: 1fr 120px; gap: 20px; align-items: center; margin-bottom: 24px; }
+        .slider-label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); display: block; margin-bottom: 6px;}
+        .val-display { 
+            background: var(--bg-input); border: 1px solid var(--border-color); 
+            padding: 6px 10px; text-align: right; font-family: 'Consolas', monospace; 
+            color: var(--orlin-blue); font-weight: 700; border-radius: 3px;
+        }
         
-        /* Chart Area */
-        #chart-container { width: 100%; height: 280px; border-radius: var(--radius); overflow: hidden; background: var(--white); }
+        input[type=range] { width: 100%; height: 6px; background: var(--bg-panel); border-radius: 3px; outline: none; -webkit-appearance: none; appearance: none; }
+        input[type=range]::-webkit-slider-thumb { 
+            -webkit-appearance: none; width: 20px; height: 20px; 
+            background: var(--orlin-accent); border: 2px solid white; 
+            border-radius: 50%; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+        }
 
-        /* Range Sliders */
-        .slider-group { margin-bottom: 20px; }
-        .slider-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
-        .slider-val { font-weight: 700; color: var(--primary); }
-        input[type=range] { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; outline: none; -webkit-appearance: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: var(--primary); border: 3px solid white; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        /* Toggles */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; background: var(--border-color); border-radius: 12px; transition: 0.3s; cursor: pointer; }
+        .toggle-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.3s; }
+        input:checked + .toggle-switch { background: var(--orlin-accent); }
+        input:checked + .toggle-switch::after { transform: translateX(20px); }
 
-        /* Action Button */
-        .cta-btn { 
-            width: 100%; padding: 16px; background: var(--primary);
+        /* Metrics Display - Digital Readout */
+        .metrics-panel { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border-color); border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin-bottom: 20px;}
+        .metric-box { background: var(--surface); padding: 16px; text-align: center; }
+        .metric-val { font-size: 1.8rem; font-weight: 800; color: var(--text-main); font-family: 'Consolas', monospace; }
+        .metric-unit { font-size: 0.9rem; color: var(--text-muted); font-weight: normal; }
+        .metric-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-top: 4px; }
+
+        /* Items Grid */
+        .item-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .item-card { 
+            background: var(--surface); border: 1px solid var(--border-color); padding: 16px; 
+            border-radius: 4px; text-align: center; cursor: pointer; transition: 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .item-card:hover { border-color: var(--orlin-blue); transform: translateY(-1px); }
+        .item-card.active { border-color: var(--orlin-accent); background: var(--bg-active-item); }
+        .item-card.active::after {
+            content: '✓'; position: absolute; top: 4px; right: 6px; 
+            color: var(--orlin-accent); font-weight: 800; font-size: 0.8rem;
+        }
+        .item-icon { font-size: 1.4rem; margin-bottom: 8px; color: var(--orlin-light); }
+
+        /* Chart */
+        #chart-container { width: 100%; height: 320px; border: 1px solid var(--border-color); background: var(--surface); border-radius: 4px; }
+        
+        /* Recommendation Box */
+        .rec-box { background: var(--bg-rec); border-left: 4px solid var(--orlin-blue); padding: 16px; margin-top: 20px; font-size: 0.9rem; line-height: 1.5; color: var(--text-main); }
+        .rec-box strong { color: var(--orlin-blue); }
+
+        /* Tooltips */
+        .help-icon {
+            color: var(--text-muted); font-size: 0.85rem; margin-left: 6px; cursor: help; position: relative; display: inline-flex; align-items: center;
+        }
+        .help-icon:hover { color: var(--orlin-blue); }
+        .help-icon::before {
+            content: attr(data-tooltip); visibility: hidden; width: 200px;
+            background-color: var(--text-main); color: var(--bg-grid);
+            text-align: left; border-radius: 4px; padding: 8px 12px;
+            position: absolute; z-index: 100; bottom: 100%; left: 50%;
+            transform: translateX(-50%); margin-bottom: 8px; opacity: 0;
+            transition: opacity 0.2s; font-size: 0.75rem; font-weight: normal;
+            line-height: 1.4; box-shadow: var(--shadow-card); pointer-events: none;
+            white-space: normal; text-transform: none;
+        }
+        .help-icon:hover::before { visibility: visible; opacity: 1; }
+        .help-icon::after {
+            content: ""; visibility: hidden; position: absolute;
+            bottom: 100%; left: 50%; margin-bottom: -2px; margin-left: -5px;
+            border-width: 5px; border-style: solid;
+            border-color: var(--text-main) transparent transparent transparent;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .help-icon:hover::after { visibility: visible; opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="brand">
+            <div class="logo-box">ORLIN</div>
+            <div class="app-title">Motion Sizing Engine</div>
+        </div>
+        <div class="header-right">
+            <button class="nav-link" onclick="switchTab('tab-tutorial', this)"><i class="fas fa-graduation-cap"></i> Tutorial</button>
+            <button class="nav-link" onclick="switchTab('tab-settings', this)"><i class="fas fa-cog"></i> Settings</button>
+            <button class="nav-link" onclick="switchTab('tab-about', this)"><i class="fas fa-info-circle"></i> About</button>
+            <div class="status-badge">v2.4 PRO</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('tab-calc', this)">Profile</button>
+            <button class="tab-btn" onclick="switchTab('tab-items', this)">Conditions</button>
+            <button class="tab-btn" onclick="switchTab('tab-data', this)">Datasheet</button>
+            <button class="tab-btn" onclick="switchTab('tab-motors', this)">Motor DB</button>
+            <button class="tab-btn" onclick="switchTab('tab-pro', this)" style="color: var(--orlin-accent);"><i class="fas fa-crown"></i> Pro Tools</button>
+        </div>
+
+        <div id="tab-calc" class="tab-content active">
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-wave-square"></i> Velocity Profile <span class="help-icon" data-tooltip="Visualizes speed over time. The area under the curve represents the total distance traveled."><i class="fas fa-question-circle"></i></span></h3>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Trapezoidal vs Triangular</div>
+                </div>
+                <div id="chart-container"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-sliders-h"></i> Move Parameters</h3>
+                </div>
+                
+                <div class="control-row">
+                    <div>
+                        <span class="slider-label">Total Stroke <span class="help-icon" data-tooltip="The total distance the load needs to move from start to finish."><i class="fas fa-question-circle"></i></span></span>
+                        <input type="range" id="input-varA" min="1" max="200" step="1" value="50" oninput="updateEngine()" title="Total Stroke" placeholder="Total Stroke">
+                    </div>
+                    <div class="val-display" id="val-varA">50 mm</div>
+                </div>
+
+                <div class="control-row">
+                    <div>
+                        <label for="input-varB" class="slider-label">Move Time <span class="help-icon" data-tooltip="The duration allowed to complete the entire move. Shorter times require higher force."><i class="fas fa-question-circle"></i></span></label>
+                        <input type="range" id="input-varB" min="20" max="1000" step="10" value="100" oninput="updateEngine()" title="Move Time">
+                    </div>
+                    <div class="val-display" id="val-varB">100 ms</div>
+                </div>
+
+                <div class="control-row">
+                    <div>
+                        <span class="slider-label">Moving Mass <span class="help-icon" data-tooltip="The total weight of the payload plus any moving carriage parts."><i class="fas fa-question-circle"></i></span></span>
+                        <input type="range" id="input-varC" min="10" max="2000" step="10" value="200" oninput="updateEngine()" title="Moving Mass" placeholder="Moving Mass">
+                    </div>
+                    <div class="val-display" id="val-varC">200 g</div>
+                </div>
+
+                <div class="toggle-row">
+                    <span><i class="fas fa-bolt"></i> High-Speed Profile (Triangular) <span class="help-icon" data-tooltip="Eliminates the constant velocity phase for faster moves, but increases peak velocity."><i class="fas fa-question-circle"></i></span></span>
+                    <label>
+                        <input type="checkbox" id="toggle-turbo" onchange="updateEngine()" style="display:none;">
+                        <div class="toggle-switch"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-items" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-wrench"></i> Environmental Factors <span class="help-icon" data-tooltip="Select external conditions that affect the force calculation, such as gravity or friction."><i class="fas fa-question-circle"></i></span></h3>
+                </div>
+                <div class="item-grid" id="preset-grid">
+                    </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> Active Constraints</h3>
+                </div>
+                <div id="active-stack-list" style="color: var(--text-muted); text-align: center; padding: 20px; font-style: italic;">
+                    Standard Horizontal Move (No external forces).
+                </div>
+                <button onclick="clearStack()" style="width:100%; padding:12px; background:var(--text-main); color:white; border:none; border-radius:4px; margin-top:10px; font-weight:600; cursor: pointer;">Reset All Factors</button>
+            </div>
+        </div>
+
+        <div id="tab-data" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-microscope"></i> Calculated Requirements</h3>
+                </div>
+                
+                <div class="metrics-panel">
+                    <div class="metric-box">
+                        <div class="metric-val" id="disp-force">0</div>
+                        <div class="metric-lbl">Peak Force (N) <span class="help-icon" data-tooltip="Maximum force required to accelerate the load."><i class="fas fa-question-circle"></i></span></div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val" id="disp-accel">0</div>
+                        <div class="metric-lbl">Acceleration (G) <span class="help-icon" data-tooltip="The G-force experienced by the load during acceleration."><i class="fas fa-question-circle"></i></span></div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val" id="res-vel">0</div>
+                        <div class="metric-lbl">Peak Velocity (m/s) <span class="help-icon" data-tooltip="The maximum speed reached during the move."><i class="fas fa-question-circle"></i></span></div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val" id="res-hold">0</div>
+                        <div class="metric-lbl">Holding Force (N) <span class="help-icon" data-tooltip="Force required to hold the load stationary against gravity."><i class="fas fa-question-circle"></i></span></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <div class="metric-lbl" style="text-align:left; margin-bottom:5px;">Estimated Motor Duty <span class="help-icon" data-tooltip="Percentage of a standard linear motor's continuous force capacity used."><i class="fas fa-question-circle"></i></span></div>
+                    <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                        <div class="prog-fill" id="bar-duty" style="width: 0%; height:100%; background:var(--orlin-blue); transition: width 0.3s;"></div>
+                    </div>
+                    <div style="text-align:right; font-size:0.75rem; color: var(--text-muted); margin-top:4px;" id="lbl-duty">0% Load</div>
+                </div>
+            </div>
+            
+            <div class="rec-box">
+                <div style="font-weight: 700; margin-bottom: 8px; text-transform: uppercase; font-size: 0.8rem;">System Recommendation</div>
+                <div id="recommendation-text">
+                    Calculating...
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3><i class="fas fa-code"></i> JSON Result Snippet</h3>
+                    <button id="btn-copy-json" onclick="copySnippet()" style="border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: 0.2s;"><i class="fas fa-copy"></i> Copy Data</button>
+                </div>
+                <pre id="json-snippet" style="background: var(--bg-input); padding: 12px; border-radius: 4px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-color); white-space: pre-wrap;"></pre>
+            </div>
+        </div>
+
+        <div id="tab-motors" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-database"></i> Compatible Motor Database</h3>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Based on calculated requirements</div>
+                </div>
+                <div id="motor-list" class="item-grid" style="grid-template-columns: 1fr;"></div>
+            </div>
+        </div>
+
+        <div id="tab-pro" class="tab-content">
+            <div class="card" style="text-align: center; padding: 40px 20px; border: 2px solid var(--orlin-accent);">
+                <div style="font-size: 3rem; color: var(--orlin-accent); margin-bottom: 16px;"><i class="fas fa-crown"></i></div>
+                <h2 style="color: var(--orlin-blue); margin-bottom: 12px;">Upgrade to ORLIN Professional</h2>
+                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 24px;">
+                    Unlock the full power of the Motion Sizing Engine. Access advanced simulation tools, export professional reports, and collaborate with your engineering team.
+                </p>
+                <button style="background: var(--orlin-accent); color: white; border: none; padding: 12px 32px; font-size: 1rem; font-weight: 700; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 6px rgba(255, 107, 0, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    Purchase License - $49/mo
+                </button>
+                <div style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">Enterprise licenses available. Contact sales.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-lock"></i> Premium Features</h3>
+                </div>
+                <div class="item-grid">
+                    <div class="item-card" style="opacity: 0.7; cursor: not-allowed;">
+                        <div class="item-icon"><i class="fas fa-cube"></i></div>
+                        <div style="font-weight:600;">3D Simulation</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Real-time 3D motion visualizer</div>
+                        <div style="margin-top:8px; color:var(--orlin-accent); font-size:0.8rem; font-weight:700;"><i class="fas fa-lock"></i> LOCKED</div>
+                    </div>
+                    <div class="item-card" style="opacity: 0.7; cursor: not-allowed;">
+                        <div class="item-icon"><i class="fas fa-file-pdf"></i></div>
+                        <div style="font-weight:600;">PDF Reports</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Generate signed engineering docs</div>
+                        <div style="margin-top:8px; color:var(--orlin-accent); font-size:0.8rem; font-weight:700;"><i class="fas fa-lock"></i> LOCKED</div>
+                    </div>
+                    <div class="item-card" style="opacity: 0.7; cursor: not-allowed;">
+                        <div class="item-icon"><i class="fas fa-users"></i></div>
+                        <div style="font-weight:600;">Team Sync</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Share projects with colleagues</div>
+                        <div style="margin-top:8px; color:var(--orlin-accent); font-size:0.8rem; font-weight:700;"><i class="fas fa-lock"></i> LOCKED</div>
+                    </div>
+                    <div class="item-card" style="opacity: 0.7; cursor: not-allowed;">
+                        <div class="item-icon"><i class="fas fa-chart-line"></i></div>
+                        <div style="font-weight:600;">Multi-Axis</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">XY and Gantry calculations</div>
+                        <div style="margin-top:8px; color:var(--orlin-accent); font-size:0.8rem; font-weight:700;"><i class="fas fa-lock"></i> LOCKED</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-tutorial" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-graduation-cap"></i> Quick Start Guide</h3>
+                </div>
+                <div style="line-height: 1.6; color: var(--text-main);">
+                    <ol style="margin-left: 20px; margin-bottom: 16px;">
+                        <li style="margin-bottom: 12px;"><strong>Define Motion Profile:</strong> Navigate to the <b>Profile</b> tab. Use the sliders to set your Stroke (distance), Move Time, and Moving Mass.</li>
+                        <li style="margin-bottom: 12px;"><strong>Select Profile Type:</strong> Toggle "High-Speed Profile" for triangular motion (higher peak velocity) or leave off for standard trapezoidal motion.</li>
+                        <li style="margin-bottom: 12px;"><strong>Apply Environmental Factors:</strong> Switch to the <b>Conditions</b> tab. Click icons to add factors like Gravity (Vertical Mount), Friction, or Safety Margins.</li>
+                        <li style="margin-bottom: 12px;"><strong>Review Datasheet:</strong> Check the <b>Datasheet</b> tab for calculated Peak Force, Acceleration, and specific hardware recommendations.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-lightbulb"></i> Pro Tips</h3>
+                </div>
+                <div style="line-height: 1.6; color: var(--text-main);">
+                    <ul style="margin-left: 20px;">
+                        <li style="margin-bottom: 12px;"><strong>Vertical Moves:</strong> Always enable <span style="background:#e0f2fe; color:#003B73; padding:2px 6px; border-radius:4px; font-size:0.85em; font-weight:600;">⬇️ Vertical Mount</span> when moving up/down. This accounts for 1G of gravity.</li>
+                        <li style="margin-bottom: 12px;"><strong>Safety Factor:</strong> For robust sizing, apply the <span style="background:#e0f2fe; color:#003B73; padding:2px 6px; border-radius:4px; font-size:0.85em; font-weight:600;">🛡️ Safety Factor</span> (1.5x) to ensure the motor has overhead.</li>
+                        <li style="margin-bottom: 12px;"><strong>Duty Cycle Check:</strong> If the "Estimated Motor Duty" bar turns <span style="color:#dc2626; font-weight:700;">RED</span>, the application requires specialized high-force actuators.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-cog"></i> Application Settings</h3>
+                </div>
+                
+                <div class="control-row">
+                    <div>
+                        <span class="slider-label">Unit System</span>
+                        <div style="font-size: 0.85rem; color: #64748b;">Select preferred measurement units</div>
+                    </div>
+                    <div style="display: flex; gap: 10px; position: relative; right: 50px;">
+                        <button onclick="setUnits('metric')" id="btn-metric" style="padding: 8px 16px; border: 1px solid var(--border-color); background: var(--orlin-blue); color: white; border-radius: 4px; cursor: pointer; font-weight: 600;">Metric</button>
+                        <button onclick="setUnits('imperial')" id="btn-imperial" style="padding: 8px 16px; border: 1px solid var(--border-color); background: var(--surface); color: var(--text-muted); border-radius: 4px; cursor: pointer; font-weight: 600;">Imperial</button>
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <div>
+                        <span class="slider-label">Appearance</span>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Toggle Dark Mode</div>
+                    </div>
+                    <div class="toggle-row" style="background: transparent; border: none; padding: 0;">
+                        <label>
+                            <input type="checkbox" id="toggle-theme" onchange="toggleTheme()" style="display:none;">
+                            <div class="toggle-switch"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-about" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-info-circle"></i> About ORLIN Motion Sizing Engine</h3>
+                </div>
+                <div style="line-height: 1.6; color: var(--text-main);">
+                    <p style="margin-bottom: 16px;"><strong>ORLIN Motion Sizing Engine</strong> is an advanced web-based motion profile calculator designed for mechanical engineers, motion control specialists, and automation professionals. This tool provides precise calculations for linear motion systems with an intuitive interface that combines engineering accuracy with practical usability.</p>
+                    
+                    <h4 style="color: var(--orlin-blue); margin-top: 20px; margin-bottom: 10px;">Key Features</h4>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        <li><strong>Dynamic Velocity Profile Visualization:</strong> Real-time plotting of trapezoidal vs. triangular motion profiles.</li>
+                        <li><strong>Comprehensive Motion Parameter Control:</strong> Precision control over stroke, time, and mass.</li>
+                        <li><strong>Environmental Factor Modeling:</strong> Account for gravity, friction, safety factors, and more.</li>
+                        <li><strong>Professional Output Metrics:</strong> Real-time calculation of Peak Force, Acceleration, Velocity, and Holding Force.</li>
+                    </ul>
+
+                    <h4 style="color: var(--orlin-blue); margin-top: 20px; margin-bottom: 10px;">Physics Model</h4>
+                    <div style="background: var(--bg-input); padding: 12px; border-radius: 4px; border: 1px solid var(--border-color); font-family: 'Consolas', monospace; font-size: 0.85rem;">
+                        <p><strong>Triangular Profile:</strong><br>
+                        v_peak = (2 * distance) / time<br>
+                        acceleration = v_peak / (time / 2)</p>
+                        
+                        <p style="margin-top: 10px;"><strong>Trapezoidal Profile:</strong><br>
+                        v_peak = 1.5 * (distance / time)<br>
+                        acceleration = v_peak / (time / 3)</p>
+                        
+                        <p style="margin-top: 10px;"><strong>Total Force:</strong><br>
+                        F_total = (F_accel + F_gravity + F_friction + F_extra) × Safety_Factor</p>
+                    </div>
+
+                    <h4 style="color: var(--orlin-blue); margin-top: 20px; margin-bottom: 10px;">Performance Specifications</h4>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        <li><strong>Distance:</strong> 1-200 mm</li>
+                        <li><strong>Time:</strong> 20-1000 ms</li>
+                        <li><strong>Mass:</strong> 10-2000 g</li>
+                        <li><strong>Algorithm Accuracy:</strong> 64-bit floating point with real-time physics simulation.</li>
+                    </ul>
+                    
+                    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted);">
+                        Version 2.4 PRO | Last Updated: 2025 | Engineered for Professionals
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        const config = {
+            presets: [
+                { id: 1, name: 'Vertical Mount', value: 9.81, type: 'accel', icon: '⬇️', desc: 'Adds Gravity' },
+                { id: 2, name: 'High Friction', value: 0.2, type: 'friction', icon: '🧱', desc: 'Rail Friction' },
+                { id: 3, name: 'Air Bearing', value: -0.05, type: 'friction', icon: '💨', desc: 'Zero Friction' },
+                { id: 4, name: 'Safety Factor', value: 1.5, type: 'mult', icon: '🛡️', desc: '50% Headroom' },
+                { id: 5, name: 'Return Spring', value: 2.0, type: 'force', icon: '🌀', desc: '+2N Force' },
+                { id: 6, name: 'Vacuum Load', value: 0.5, type: 'mass', icon: '🔌', desc: 'Hose Drag' }
+            ],
+            motorDB: [
+                { id: 'm1', name: 'L-100 Standard Stage', type: 'Linear Stage', maxForce: 40, maxAccel: 5, icon: '⚙️' },
+                { id: 'm2', name: 'VC-10 Voice Coil', type: 'Voice Coil', maxForce: 10, maxAccel: 20, icon: '🔊' },
+                { id: 'm3', name: 'HF-500 Heavy Duty', type: 'Ball Screw', maxForce: 200, maxAccel: 2, icon: '🔩' },
+                { id: 'm4', name: 'PZ-5 Nano Flexure', type: 'Piezo', maxForce: 5, maxAccel: 50, icon: '🔬' },
+                { id: 'm5', name: 'MC-200 Moving Coil', type: 'Moving Coil', maxForce: 25, maxAccel: 15, icon: '⚡' }
+            ]
+        };
+
+        let state = {
+            dist: 50,   // mm
+            time: 100,  // ms
+            mass: 200,  // g
+            isTriangular: false,
+            stack: [],
+            units: 'metric', // 'metric' or 'imperial'
+            theme: 'light'
+        };
+
+        // --- 2. ENGINE LOOP ---
+        function updateEngine() {
+            state.dist = parseFloat(document.getElementById('input-varA').value);
+            state.time = parseFloat(document.getElementById('input-varB').value);
+            state.mass = parseFloat(document.getElementById('input-varC').value);
+            state.isTriangular = document.getElementById('toggle-turbo').checked;
+
+            const results = calculateModel(state);
+            renderChart(results);
+            updateMetrics(results);
+            updateLabels();
+            updateMotorList(results);
+            updateSnippet(results);
+        }
+
+        // --- 3. PHYSICS MODEL ---
+        function calculateModel(input) {
+            // Normalize to SI units for calculation
+            let d, m;
+            if (input.units === 'imperial') {
+                d = (input.dist * 25.4) / 1000; // inches -> mm -> meters
+                m = (input.mass * 28.3495) / 1000; // oz -> g -> kg
+            } else {
+                d = input.dist / 1000; // mm -> meters
+                m = input.mass / 1000; // g -> kg
+            }
+
+            let t = input.time / 1000; // seconds
+
+            let v_peak, accel;
+
+            if (input.isTriangular) {
+                // Triangular profile: accelerate to peak, then decelerate to 0
+                v_peak = (2 * d) / t;
+                accel = v_peak / (t / 2);
+                
+                // Generate triangular profile points
+                let xData = [], yData = [];
+                // Start at (0, 0)
+                xData.push(0);
+                yData.push(0);
+                // Peak at half time
+                xData.push(t/2);
+                yData.push(v_peak);
+                // End at (t, 0)
+                xData.push(t);
+                yData.push(0);
+                
+                // Add some intermediate points for better visualization
+                xData.push(t/4);
+                yData.push(v_peak/2);
+                xData.push(3*t/4);
+                yData.push(v_peak/2);
+                
+                // Sort by x for proper line drawing
+                let combined = xData.map((x, i) => ({x, y: yData[i]}));
+                combined.sort((a, b) => a.x - b.x);
+                xData = combined.map(p => p.x);
+                yData = combined.map(p => p.y);
+                
+                // FIXED: Store the arrays for use in renderChart
+                varData = {x: xData, y: yData};
+            } else {
+                // Trapezoidal profile: accelerate, constant velocity, decelerate
+                v_peak = 1.5 * (d / t);
+                accel = v_peak / (t / 3);
+                
+                // Generate trapezoidal profile points
+                let xData = [], yData = [];
+                // Start
+                xData.push(0);
+                yData.push(0);
+                // End of acceleration phase
+                xData.push(t/3);
+                yData.push(v_peak);
+                // Start of deceleration phase
+                xData.push(2*t/3);
+                yData.push(v_peak);
+                // End
+                xData.push(t);
+                yData.push(0);
+                
+                varData = {x: xData, y: yData};
+            }
+
+            let g_force = 0; 
+            let friction_co = 0.01; 
+            let extra_force = 0;
+            let safety_mult = 1.0;
+
+            input.stack.forEach(item => {
+                if(item.id === 1) g_force = 9.81;
+                if(item.type === 'friction') friction_co += item.value;
+                if(item.type === 'mult') safety_mult = item.value;
+                if(item.type === 'force') extra_force += item.value;
+            });
+
+            let force_accel = m * accel;
+            let force_gravity = m * g_force;
+            let force_friction = (m * 9.81) * friction_co;
+            
+            let total_force = (force_accel + force_gravity + force_friction + extra_force) * safety_mult;
+
+            let g_val = accel / 9.81;
+
+            return {
+                x: varData.x,
+                y: varData.y,
+                peakForce: total_force,
+                peakVel: v_peak,
+                accelG: g_val,
+                holdForce: (force_gravity + extra_force),
+                time: t
+            };
+        }
+
+        // --- 4. RENDERERS ---
+        function renderChart(data) {
+            // Convert data for display if Imperial
+            let yDisplay = data.y;
+            let yUnit = 'm/s';
+            if (state.units === 'imperial') {
+                yDisplay = data.y.map(v => v * 39.3701); // m/s -> in/s
+                yUnit = 'in/s';
+            }
+
+            const isDark = state.theme === 'dark';
+            const textColor = isDark ? '#f1f5f9' : '#1e293b';
+            const gridColor = isDark ? '#334155' : '#f1f5f9';
+            const bgColor = isDark ? '#1e293b' : 'white';
+
+            const trace = {
+                x: data.x,
+                y: yDisplay,
+                mode: 'lines',
+                fill: 'tozeroy',
+                line: { shape: 'linear', color: '#003B73', width: 2 },
+                name: `Velocity (${yUnit})`
+            };
+
+            const layout = {
+                margin: { t: 20, r: 20, l: 40, b: 40 },
+                height: 320,
+                showlegend: false,
+                xaxis: { 
+                    title: 'Time (s)', 
+                    color: textColor,
+                    gridcolor: gridColor,
+                    range: [0, data.x[data.x.length - 1] * 1.1] // Dynamic range
+                },
+                yaxis: { 
+                    title: `Velocity (${yUnit})`, 
+                    color: textColor,
+                    gridcolor: gridColor,
+                    range: [0, Math.max(...yDisplay) * 1.2] // Dynamic range
+                },
+                paper_bgcolor: bgColor,
+                plot_bgcolor: bgColor,
+                font: { color: textColor }
+            };
+
+            Plotly.newPlot('chart-container', [trace], layout, {displayModeBar: false});
+        }
+
+        function updateMetrics(data) {
+            let forceVal = data.peakForce;
+            let velVal = data.peakVel;
+            let holdVal = data.holdForce;
+            
+            if (state.units === 'imperial') {
+                forceVal *= 0.224809; // N -> lbf
+                velVal *= 39.3701;    // m/s -> in/s
+                holdVal *= 0.224809;  // N -> lbf
+            }
+
+            document.getElementById('disp-force').textContent = forceVal.toFixed(2);
+            document.getElementById('disp-accel').textContent = data.accelG.toFixed(1);
+            
+            document.getElementById('res-vel').textContent = velVal.toFixed(2);
+            document.getElementById('res-hold').textContent = holdVal.toFixed(2);
+
+            // Update Unit Labels in Datasheet
+            const unitForce = state.units === 'imperial' ? 'lbf' : 'N';
+            const unitVel = state.units === 'imperial' ? 'in/s' : 'm/s';
+            
+            document.querySelectorAll('.metric-lbl')[0].textContent = `Peak Force (${unitForce})`;
+            document.querySelectorAll('.metric-lbl')[2].textContent = `Peak Velocity (${unitVel})`;
+            document.querySelectorAll('.metric-lbl')[3].textContent = `Holding Force (${unitForce})`;
+
+            let duty = Math.min(100, (data.peakForce / 20) * 100); 
+            let bar = document.getElementById('bar-duty');
+            bar.style.width = duty + "%";
+            
+            // Dynamic color for load bar
+            if(duty > 80) bar.style.background = "#dc2626"; // Red
+            else if(duty > 50) bar.style.background = "#f59e0b"; // Orange
+            else bar.style.background = "#003B73"; // Blue
+
+            document.getElementById('lbl-duty').textContent = Math.round(duty) + "% of Standard Actuator Capacity";
+
+            let rec = "";
+            if (data.accelG > 10) {
+                rec = "⚠️ <strong>EXTREME DYNAMICS:</strong> >10G requires specialized Moving Coil tech. Standard linear motors will overheat.";
+            } else if (data.accelG > 5) {
+                rec = "⚡ <strong>High Performance:</strong> Ideal for ORLIN Moving Coil Actuators. Stepper motors will lose steps at this acceleration.";
+            } else if (data.peakForce > 25) {
+                rec = "🏋️ <strong>High Force:</strong> Consider ball-screw or electric cylinder. Direct drive piezo may struggle.";
+            } else if (state.dist < 10 && state.time < 50) {
+                rec = "🔬 <strong>Micro-Positioning:</strong> Perfect for Piezo Flexure or Short-Stroke Voice Coil.";
+            } else {
+                rec = "✅ <strong>Standard Application:</strong> Compatible with most linear stages.";
+            }
+            document.getElementById('recommendation-text').innerHTML = rec;
+        }
+
+        function updateMotorList(data) {
+            const list = document.getElementById('motor-list');
+            if(!list) return;
+            list.innerHTML = '';
+
+            const compatible = config.motorDB.filter(m => m.maxForce >= data.peakForce && m.maxAccel >= data.accelG);
+
+            if (compatible.length === 0) {
+                list.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted); grid-column: 1 / -1;">No standard motors match these requirements.<br>Try reducing acceleration or mass.</div>`;
+                return;
+            }
+
+            compatible.forEach(m => {
+                let displayForce = m.maxForce;
+                let unitForce = 'N';
+                
+                if (state.units === 'imperial') {
+                    displayForce = m.maxForce * 0.224809;
+                    unitForce = 'lbf';
+                }
+
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.textAlign = 'left';
+                div.style.gap = '16px';
+                
+                div.innerHTML = `
+                    <div style="font-size: 1.5rem;">${m.icon}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:var(--orlin-blue);">${m.name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${m.type}</div>
+                    </div>
+                    <div style="text-align:right; font-size:0.8rem; color:var(--text-main);">
+                        <div><strong>${displayForce.toFixed(1)} ${unitForce}</strong> Max</div>
+                        <div><strong>${m.maxAccel} G</strong> Max</div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateLabels() {
+            const unitDist = state.units === 'imperial' ? 'in' : 'mm';
+            const unitMass = state.units === 'imperial' ? 'oz' : 'g';
+            
+            document.getElementById('val-varA').textContent = state.dist + " " + unitDist;
+            document.getElementById('val-varB').textContent = state.time + " ms";
+            document.getElementById('val-varC').textContent = state.mass + " " + unitMass;
+            
+            // Update placeholders
+            document.getElementById('input-varA').title = `Total Stroke (${unitDist})`;
+            document.getElementById('input-varC').title = `Moving Mass (${unitMass})`;
+        }
+
+        // --- UI HELPERS ---
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+            if(tabId === 'tab-calc') Plotly.Plots.resize('chart-container');
+        }
+
+        function initPresets() {
+            const grid = document.getElementById('preset-grid');
+            config.presets.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                div.innerHTML = `<div class="item-icon">${item.icon}</div><div style="font-weight:600; font-size:0.85rem;">${item.name}</div><div style="font-size:0.75rem; color:#64748b;">${item.desc}</div>`;
+                div.onclick = () => addItem(item, div);
+                grid.appendChild(div);
+            });
+        }
+
+        function addItem(item, div) {
+            // Toggle Visual
+            if(state.stack.some(i => i.id === item.id)) {
+                state.stack = state.stack.filter(i => i.id !== item.id);
+                div.classList.remove('active');
+            } else {
+                state.stack.push(item);
+                div.classList.add('active');
+            }
+            renderStack();
+            updateEngine();
+        }
+
+        function clearStack() {
+            state.stack = [];
+            document.querySelectorAll('.item-card').forEach(el => el.classList.remove('active'));
+            renderStack();
+            updateEngine();
+        }
+
+        function renderStack() {
+            const list = document.getElementById('active-stack-list');
+            if (state.stack.length === 0) { list.innerHTML = "Standard Horizontal Move (No external forces)."; return; }
+            
+            list.innerHTML = state.stack.map(i => `<span style="display:inline-block; background:#e0f2fe; color:#003B73; padding:4px 10px; border-radius:12px; margin:2px; font-size:0.75rem; font-weight:600;">${i.icon} ${i.name}</span>`).join('');
+        }
+
+        function setUnits(mode) {
+            if (state.units === mode) return;
+            
+            const distInput = document.getElementById('input-varA');
+            const massInput = document.getElementById('input-varC');
+            const btnMetric = document.getElementById('btn-metric');
+            const btnImperial = document.getElementById('btn-imperial');
+            
+            let currentDist = parseFloat(distInput.value);
+            let currentMass = parseFloat(massInput.value);
+            
+            if (mode === 'imperial') {
+                // Metric -> Imperial
+                // mm -> inches (1 mm = 0.03937 in)
+                let newDist = currentDist / 25.4;
+                // g -> oz (1 g = 0.035274 oz)
+                let newMass = currentMass / 28.3495;
+                
+                distInput.min = "0.1"; distInput.max = "8.0"; distInput.step = "0.1";
+                distInput.value = newDist.toFixed(2);
+                
+                massInput.min = "0.5"; massInput.max = "70.0"; massInput.step = "0.5";
+                massInput.value = newMass.toFixed(2);
+
+                btnMetric.style.background = "var(--surface)"; btnMetric.style.color = "var(--text-muted)";
+                btnImperial.style.background = "var(--orlin-blue)"; btnImperial.style.color = "white";
+                
+            } else {
+                // Imperial -> Metric
+                let newDist = currentDist * 25.4;
+                let newMass = currentMass * 28.3495;
+                
+                distInput.min = "1"; distInput.max = "200"; distInput.step = "1";
+                distInput.value = newDist.toFixed(0);
+                
+                massInput.min = "10"; massInput.max = "2000"; massInput.step = "10";
+                massInput.value = newMass.toFixed(0);
+
+                btnImperial.style.background = "var(--surface)"; btnImperial.style.color = "var(--text-muted)";
+                btnMetric.style.background = "var(--orlin-blue)"; btnMetric.style.color = "white";
+            }
+            
+            state.units = mode;
+            updateEngine();
+        }
+
+        function toggleTheme() {
+            const isDark = document.getElementById('toggle-theme').checked;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            state.theme = isDark ? 'dark' : 'light';
+            
+            updateEngine(); // Re-render chart
+        }
+
+        function updateSnippet(data) {
+            const el = document.getElementById('json-snippet');
+            if(!el) return;
+
+            const snippet = {
+                meta: {
+                    timestamp: new Date().toISOString(),
+                    version: "2.4 PRO",
+                    units: state.units
+                },
+                inputs: {
+                    distance: state.dist,
+                    time: state.time,
+                    mass: state.mass,
+                    profile: state.isTriangular ? 'triangular' : 'trapezoidal',
+                    active_factors: state.stack.map(s => s.name)
+                },
+                results_si: {
+                    peak_force_newtons: parseFloat(data.peakForce.toFixed(3)),
+                    acceleration_g: parseFloat(data.accelG.toFixed(3)),
+                    peak_velocity_mps: parseFloat(data.peakVel.toFixed(3)),
+                    holding_force_newtons: parseFloat(data.holdForce.toFixed(3))
+                }
+            };
+            
+            el.textContent = JSON.stringify(snippet, null, 2);
+        }
+
+        function copySnippet() {
+            const text = document.getElementById('json-snippet').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('btn-copy-json');
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        initPresets();
+        updateEngine();
+
+    </script>
+</body>
+</html>
